@@ -26,4 +26,11 @@ public class Prioridade {
         this.id = id;
     }
 
-    public String getDesc
+    public String getDescricao() {
+        return descricao;
+    }
+
+    public void setDescricao(String descricao) {
+        this.descricao = descricao;
+    }
+}

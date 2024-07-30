@@ -37,4 +37,60 @@ public class ListaTarefasController {
         if (listaTarefas.getPrioridade() != null && listaTarefas.getPrioridade().getId() != null) {
             Optional<Prioridade> prioridade = prioridadeRepository.findById(listaTarefas.getPrioridade().getId());
             prioridade.ifPresent(listaTarefas::setPrioridade);
- 
+        }
+
+        if (listaTarefas.getCategoriaTarefa() != null && listaTarefas.getCategoriaTarefa().getId() != null) {
+            Optional<CategoriaTarefa> categoriaTarefa = categoriaTarefaRepository.findById(listaTarefas.getCategoriaTarefa().getId());
+            categoriaTarefa.ifPresent(listaTarefas::setCategoriaTarefa);
+        }
+
+        if (listaTarefas.getStatus() != null && listaTarefas.getStatus().getId() != null) {
+            Optional<Status> status = statusRepository.findById(listaTarefas.getStatus().getId());
+            status.ifPresent(listaTarefas::setStatus);
+        }
+
+        if (listaTarefas.getResponsavel() != null && listaTarefas.getResponsavel().getId() != null) {
+            Optional<Responsavel> responsavel = responsavelRepository.findById(listaTarefas.getResponsavel().getId());
+            responsavel.ifPresent(listaTarefas::setResponsavel);
+        }
+
+        return listaTarefasRepository.save(listaTarefas);
+    }
+
+    @GetMapping("/{id}")
+    public ListaTarefas getListaTarefasById(@PathVariable String id) {
+        return listaTarefasRepository.findById(id).orElse(null);
+    }
+
+    @PutMapping("/{id}")
+    public ListaTarefas updateListaTarefas(@PathVariable String id, @RequestBody ListaTarefas listaTarefas) {
+        listaTarefas.setId(id);
+
+        if (listaTarefas.getPrioridade() != null && listaTarefas.getPrioridade().getId() != null) {
+            Optional<Prioridade> prioridade = prioridadeRepository.findById(listaTarefas.getPrioridade().getId());
+            prioridade.ifPresent(listaTarefas::setPrioridade);
+        }
+
+        if (listaTarefas.getCategoriaTarefa() != null && listaTarefas.getCategoriaTarefa().getId() != null) {
+            Optional<CategoriaTarefa> categoriaTarefa = categoriaTarefaRepository.findById(listaTarefas.getCategoriaTarefa().getId());
+            categoriaTarefa.ifPresent(listaTarefas::setCategoriaTarefa);
+        }
+
+        if (listaTarefas.getStatus() != null && listaTarefas.getStatus().getId() != null) {
+            Optional<Status> status = statusRepository.findById(listaTarefas.getStatus().getId());
+            status.ifPresent(listaTarefas::setStatus);
+        }
+
+        if (listaTarefas.getResponsavel() != null && listaTarefas.getResponsavel().getId() != null) {
+            Optional<Responsavel> responsavel = responsavelRepository.findById(listaTarefas.getResponsavel().getId());
+            responsavel.ifPresent(listaTarefas::setResponsavel);
+        }
+
+        return listaTarefasRepository.save(listaTarefas);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteListaTarefas(@PathVariable String id) {
+        listaTarefasRepository.deleteById(id);
+    }
+}
