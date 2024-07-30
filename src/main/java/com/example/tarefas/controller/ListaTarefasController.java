@@ -1,12 +1,14 @@
 package com.example.tarefas.controller;
 
+import com.example.tarefas.exception.*;
 import com.example.tarefas.model.*;
 import com.example.tarefas.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/listaTarefas")
@@ -28,69 +30,121 @@ public class ListaTarefasController {
     private ResponsavelRepository responsavelRepository;
 
     @GetMapping
-    public List<ListaTarefas> getAllListaTarefas() {
-        return listaTarefasRepository.findAll();
+    public ResponseEntity<List<ListaTarefas>> getAllListaTarefas() {
+        List<ListaTarefas> tarefas = listaTarefasRepository.findAll();
+        return new ResponseEntity<>(tarefas, HttpStatus.OK);
     }
 
     @PostMapping
-    public ListaTarefas createListaTarefas(@RequestBody ListaTarefas listaTarefas) {
-        if (listaTarefas.getPrioridade() != null && listaTarefas.getPrioridade().getId() != null) {
-            Optional<Prioridade> prioridade = prioridadeRepository.findById(listaTarefas.getPrioridade().getId());
-            prioridade.ifPresent(listaTarefas::setPrioridade);
-        }
+    public ResponseEntity<Object> createListaTarefas(@RequestBody ListaTarefas listaTarefas) {
+        try {
+            if (listaTarefas.getPrioridade() != null && listaTarefas.getPrioridade().getId() != null) {
+                Prioridade prioridade = prioridadeRepository.findById(listaTarefas.getPrioridade().getId())
+                        .orElseThrow(() -> new PrioridadeNotFoundException("Prioridade não encontrada com o id " + listaTarefas.getPrioridade().getId()));
+                listaTarefas.setPrioridade(prioridade);
+            } else {
+                throw new PrioridadeNotFoundException("Prioridade é obrigatória");
+            }
 
-        if (listaTarefas.getCategoriaTarefa() != null && listaTarefas.getCategoriaTarefa().getId() != null) {
-            Optional<CategoriaTarefa> categoriaTarefa = categoriaTarefaRepository.findById(listaTarefas.getCategoriaTarefa().getId());
-            categoriaTarefa.ifPresent(listaTarefas::setCategoriaTarefa);
-        }
+            if (listaTarefas.getCategoriaTarefa() != null && listaTarefas.getCategoriaTarefa().getId() != null) {
+                CategoriaTarefa categoriaTarefa = categoriaTarefaRepository.findById(listaTarefas.getCategoriaTarefa().getId())
+                        .orElseThrow(() -> new CategoriaTarefaNotFoundException("CategoriaTarefa não encontrada com o id " + listaTarefas.getCategoriaTarefa().getId()));
+                listaTarefas.setCategoriaTarefa(categoriaTarefa);
+            } else {
+                throw new CategoriaTarefaNotFoundException("CategoriaTarefa é obrigatória");
+            }
 
-        if (listaTarefas.getStatus() != null && listaTarefas.getStatus().getId() != null) {
-            Optional<Status> status = statusRepository.findById(listaTarefas.getStatus().getId());
-            status.ifPresent(listaTarefas::setStatus);
-        }
+            if (listaTarefas.getStatus() != null && listaTarefas.getStatus().getId() != null) {
+                Status status = statusRepository.findById(listaTarefas.getStatus().getId())
+                        .orElseThrow(() -> new StatusNotFoundException("Status não encontrado com o id " + listaTarefas.getStatus().getId()));
+                listaTarefas.setStatus(status);
+            } else {
+                throw new StatusNotFoundException("Status é obrigatório");
+            }
 
-        if (listaTarefas.getResponsavel() != null && listaTarefas.getResponsavel().getId() != null) {
-            Optional<Responsavel> responsavel = responsavelRepository.findById(listaTarefas.getResponsavel().getId());
-            responsavel.ifPresent(listaTarefas::setResponsavel);
-        }
+            if (listaTarefas.getResponsavel() != null && listaTarefas.getResponsavel().getId() != null) {
+                Responsavel responsavel = responsavelRepository.findById(listaTarefas.getResponsavel().getId())
+                        .orElseThrow(() -> new ResponsavelNotFoundException("Responsável não encontrado com o id " + listaTarefas.getResponsavel().getId()));
+                listaTarefas.setResponsavel(responsavel);
+            } else {
+                throw new ResponsavelNotFoundException("Responsável é obrigatório");
+            }
 
-        return listaTarefasRepository.save(listaTarefas);
+            ListaTarefas savedTarefa = listaTarefasRepository.save(listaTarefas);
+            return new ResponseEntity<>(savedTarefa, HttpStatus.CREATED);
+        } catch (PrioridadeNotFoundException | CategoriaTarefaNotFoundException | StatusNotFoundException | ResponsavelNotFoundException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @GetMapping("/{id}")
-    public ListaTarefas getListaTarefasById(@PathVariable String id) {
-        return listaTarefasRepository.findById(id).orElse(null);
+    public ResponseEntity<ListaTarefas> getListaTarefasById(@PathVariable String id) {
+        try {
+            ListaTarefas tarefa = listaTarefasRepository.findById(id).orElseThrow(() ->
+                new ResourceNotFoundException("Tarefa não encontrada com o id " + id));
+            return new ResponseEntity<>(tarefa, HttpStatus.OK);
+        } catch (ResourceNotFoundException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 
     @PutMapping("/{id}")
-    public ListaTarefas updateListaTarefas(@PathVariable String id, @RequestBody ListaTarefas listaTarefas) {
-        listaTarefas.setId(id);
+    public ResponseEntity<Object> updateListaTarefas(@PathVariable String id, @RequestBody ListaTarefas listaTarefas) {
+        try {
+            listaTarefas.setId(id);
 
-        if (listaTarefas.getPrioridade() != null && listaTarefas.getPrioridade().getId() != null) {
-            Optional<Prioridade> prioridade = prioridadeRepository.findById(listaTarefas.getPrioridade().getId());
-            prioridade.ifPresent(listaTarefas::setPrioridade);
+            if (listaTarefas.getPrioridade() != null && listaTarefas.getPrioridade().getId() != null) {
+                Prioridade prioridade = prioridadeRepository.findById(listaTarefas.getPrioridade().getId())
+                        .orElseThrow(() -> new PrioridadeNotFoundException("Prioridade não encontrada com o id " + listaTarefas.getPrioridade().getId()));
+                listaTarefas.setPrioridade(prioridade);
+            } else {
+                throw new PrioridadeNotFoundException("Prioridade é obrigatória");
+            }
+
+            if (listaTarefas.getCategoriaTarefa() != null && listaTarefas.getCategoriaTarefa().getId() != null) {
+                CategoriaTarefa categoriaTarefa = categoriaTarefaRepository.findById(listaTarefas.getCategoriaTarefa().getId())
+                        .orElseThrow(() -> new CategoriaTarefaNotFoundException("CategoriaTarefa não encontrada com o id " + listaTarefas.getCategoriaTarefa().getId()));
+                listaTarefas.setCategoriaTarefa(categoriaTarefa);
+            } else {
+                throw new CategoriaTarefaNotFoundException("CategoriaTarefa é obrigatória");
+            }
+
+            if (listaTarefas.getStatus() != null && listaTarefas.getStatus().getId() != null) {
+                Status status = statusRepository.findById(listaTarefas.getStatus().getId())
+                        .orElseThrow(() -> new StatusNotFoundException("Status não encontrado com o id " + listaTarefas.getStatus().getId()));
+                listaTarefas.setStatus(status);
+            } else {
+                throw new StatusNotFoundException("Status é obrigatório");
+            }
+
+            if (listaTarefas.getResponsavel() != null && listaTarefas.getResponsavel().getId() != null) {
+                Responsavel responsavel = responsavelRepository.findById(listaTarefas.getResponsavel().getId())
+                        .orElseThrow(() -> new ResponsavelNotFoundException("Responsável não encontrado com o id " + listaTarefas.getResponsavel().getId()));
+                listaTarefas.setResponsavel(responsavel);
+            } else {
+                throw new ResponsavelNotFoundException("Responsável é obrigatório");
+            }
+
+            ListaTarefas updatedTarefa = listaTarefasRepository.save(listaTarefas);
+            return new ResponseEntity<>(updatedTarefa, HttpStatus.OK);
+        } catch (PrioridadeNotFoundException | CategoriaTarefaNotFoundException | StatusNotFoundException | ResponsavelNotFoundException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (ResourceNotFoundException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-
-        if (listaTarefas.getCategoriaTarefa() != null && listaTarefas.getCategoriaTarefa().getId() != null) {
-            Optional<CategoriaTarefa> categoriaTarefa = categoriaTarefaRepository.findById(listaTarefas.getCategoriaTarefa().getId());
-            categoriaTarefa.ifPresent(listaTarefas::setCategoriaTarefa);
-        }
-
-        if (listaTarefas.getStatus() != null && listaTarefas.getStatus().getId() != null) {
-            Optional<Status> status = statusRepository.findById(listaTarefas.getStatus().getId());
-            status.ifPresent(listaTarefas::setStatus);
-        }
-
-        if (listaTarefas.getResponsavel() != null && listaTarefas.getResponsavel().getId() != null) {
-            Optional<Responsavel> responsavel = responsavelRepository.findById(listaTarefas.getResponsavel().getId());
-            responsavel.ifPresent(listaTarefas::setResponsavel);
-        }
-
-        return listaTarefasRepository.save(listaTarefas);
     }
 
     @DeleteMapping("/{id}")
-    public void deleteListaTarefas(@PathVariable String id) {
-        listaTarefasRepository.deleteById(id);
+    public ResponseEntity<Void> deleteListaTarefas(@PathVariable String id) {
+        try {
+            ListaTarefas tarefa = listaTarefasRepository.findById(id).orElseThrow(() ->
+                new ResourceNotFoundException("Tarefa não encontrada com o id " + id));
+            listaTarefasRepository.deleteById(id);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        } catch (ResourceNotFoundException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 }
