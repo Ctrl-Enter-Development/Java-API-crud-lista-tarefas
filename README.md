@@ -153,5 +153,3 @@ Este projeto é licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICENSE
 ```
 
 ---
-
-Podemos trabalhar em cada uma dessas seções para personalizá-las conforme necessário. Se desejar, podemos começar escrevendo a descrição e funcionalidades detalhadas ou focar em qualquer outra seção que considere mais urgente.
